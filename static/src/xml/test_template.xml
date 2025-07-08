@@ -1,0 +1,641 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="live_chat.WhatsAppChat" owl="1">
+        <div class="o_whatsapp_chat d-flex h-100" style="background-color: #f0f2f5;">
+            <!-- WhatsApp Loader (shown during loading state) -->
+            <t t-if="state.showLoader">
+                <div class="whatsapp-loader h-100 w-100 d-flex flex-column justify-content-center align-items-center" style="background-color: #f0f2f5;">
+                    <div class="loader-content text-center">
+                        <div class="loader-logo mb-4">
+                            <div style="width: 64px; height: 64px; background-color: #25D366; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa fa-whatsapp text-white" style="font-size: 36px;"></i>
+                            </div>
+                        </div>
+                        <div class="loader-animation mb-4">
+                            <div class="d-flex justify-content-center">
+                                <div class="dot" style="animation-delay: 0s;"></div>
+                                <div class="dot" style="animation-delay: 0.2s;"></div>
+                                <div class="dot" style="animation-delay: 0.4s;"></div>
+                            </div>
+                        </div>
+                        <h4 class="mb-2" style="color: #333;">
+                            <t t-if="state.connectionStatus === 'loading'">Loading your chats</t>
+                            <t t-elif="state.connectionStatus === 'connecting'">Connecting to WhatsApp</t>
+                        </h4>
+                        <p class="text-muted">
+                            <t t-if="state.connectionStatus === 'loading'">This may take a few moments</t>
+                            <t t-elif="state.connectionStatus === 'connecting'">Please wait while we establish connection</t>
+                        </p>
+                    </div>
+                </div>
+            </t>
+            
+            <!-- Media Viewer Modal -->
+            <t t-if="state.showMediaViewer">
+                <div class="modal-backdrop fade show" style="z-index: 1100;"></div>
+                <div class="modal fade show d-block" style="z-index: 1105;" t-on-click.self="() => this.state.showMediaViewer = false">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <t t-esc="state.viewedMedia.name || 'Media'"/>
+                                </h5>
+                                <button type="button" class="btn-close" t-on-click="() => this.state.showMediaViewer = false"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <t t-if="state.viewedMedia.type === 'image'">
+                                    <img t-att-src="state.viewedMedia.url" class="img-fluid" style="max-height: 70vh;"/>
+                                </t>
+                                <t t-elif="state.viewedMedia.type === 'video'">
+                                    <video controls="true" autoplay="true" class="w-100" style="max-height: 70vh;">
+                                        <source t-att-src="state.viewedMedia.url" t-att-type="state.viewedMedia.mimeType"/>
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </t>
+                                <t t-elif="state.viewedMedia.type === 'document'">
+                                    <div class="document-viewer">
+                                        <iframe t-att-src="state.viewedMedia.url" 
+                                                style="width: 100%; height: 70vh; border: none;"></iframe>
+                                    </div>
+                                </t>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showMediaViewer = false">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+            
+           <!-- QR Code Screen (shown when not authenticated) -->
+            <t t-if="!state.isAuthenticated and !state.showLoader">
+                <div class="qr-container h-100 w-100 d-flex flex-column justify-content-center align-items-center" style="background-color: #f5f5f0;">
+                    <div class="qr-box bg-white p-4 rounded-4 shadow-sm" style="max-width: 800px; width: 90%;">
+                        <div class="row">
+                            <!-- Left Column - Instructions -->
+                            <div class="col-md-6 pe-md-4 d-flex flex-column justify-content-center">
+                                <div class="text-center text-md-start mb-4">
+                                    <div class="whatsapp-title d-flex justify-content-center justify-content-md-start align-items-center mb-3">
+                                        <i class="fa fa-whatsapp text-success me-2" style="font-size: 32px;"></i>
+                                        <span style="font-size: 28px; font-weight: bold; color: #25D366;">WhatsApp</span>
+                                    </div>
+                                    <h3 style="font-weight: 300; color: #41525d;">Log into WhatsApp Web</h3>
+                                </div>
+                                
+                                <p class="text-muted mb-4" style="color: #667781; font-size: 15px;">
+                                    Message privately with friends and family using WhatsApp on your browser.
+                                </p>
+                                
+                                <div class="instructions text-start mb-4" style="color: #667781; font-size: 14px;">
+                                    <ol class="ps-3" style="list-style-type: none; counter-reset: step-counter; line-height: 1.8;">
+                                        <li class="mb-2" style="counter-increment: step-counter;">
+                                            <span class="fw-bold" style="color: #25D366;">1.</span> Open WhatsApp on your phone
+                                        </li>
+                                        <li class="mb-2" style="counter-increment: step-counter;">
+                                            <span class="fw-bold" style="color: #25D366;">2.</span> Tap <strong>Menu</strong> on Android, or <strong>Settings</strong> on iPhone
+                                        </li>
+                                        <li class="mb-2" style="counter-increment: step-counter;">
+                                            <span class="fw-bold" style="color: #25D366;">3.</span> Tap <strong>Linked devices</strong> and then <strong>Link a device</strong>
+                                        </li>
+                                        <li style="counter-increment: step-counter;">
+                                            <span class="fw-bold" style="color: #25D366;">4.</span> Point your phone at this screen to scan the QR code
+                                        </li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="text-center text-md-start mb-3">
+                                    <a href="#" style="color: #25D366; text-decoration: none; font-size: 14px;">
+                                        Need help getting started?
+                                    </a>
+                                </div>
+                                
+                                <div class="d-flex justify-content-center justify-content-md-start mb-3">
+                                    <div class="border-top" style="width: 100px;"></div>
+                                </div>
+                                
+                                <div class="text-center text-md-start">
+                                    <button class="btn btn-outline-success mb-3" style="border-color: #25D366; color: #25D366;">
+                                        Log in with phone number
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-4 text-muted" style="font-size: 12px;">
+                                    <label class="d-flex align-items-center justify-content-center justify-content-md-start">
+                                        <input type="checkbox" class="me-2" /> Stay logged in on this browser
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column - QR Code -->
+                            <div class="col-md-6 ps-md-4 d-flex flex-column justify-content-center align-items-center">
+                                <div class="qr-code-container p-4 border rounded-3" style="background: #f8f9fa; max-width: 300px;">
+                                    <t t-if="state.qrCode">
+                                        <img t-att-src="state.qrCode" alt="WhatsApp QR Code" class="img-fluid"/>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="d-flex flex-column align-items-center py-4">
+                                            <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-3 text-muted">Generating QR Code...</p>
+                                        </div>
+                                    </t>
+                                </div>
+                                
+                                <!-- Regenerate QR Code Button -->
+                                <button class="btn btn-outline-success mt-3" t-on-click="regenerateQR">
+                                    <i class="fa fa-refresh me-2"></i> Generate New QR Code
+                                </button>
+                                
+                                <div class="connection-status mt-3" style="width: 100%; max-width: 300px;">
+                                    <t t-if="state.connectionStatus === 'connecting'">
+                                        <div class="alert alert-info d-flex align-items-center" style="font-size: 14px;">
+                                            <i class="fa fa-spinner fa-spin me-2"></i>
+                                            <span>Waiting for QR scan...</span>
+                                        </div>
+                                    </t>
+                                    <t t-if="state.connectionStatus === 'failed'">
+                                        <div class="alert alert-danger d-flex align-items-center" style="font-size: 14px;">
+                                            <i class="fa fa-exclamation-triangle me-2"></i>
+                                            <span>Connection failed. Please try again.</span>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+            
+            <!-- Main Chat Interface (shown when authenticated and not loading) -->
+            <t t-if="state.isAuthenticated and !state.showLoader">
+                <!-- Chat list sidebar -->
+                <div class="o_chat_sidebar border-end" style="width: 350px; background-color: #ffffff;">
+                    <div class="d-flex align-items-center">
+                        <h5 class="m-0">Chats</h5>
+                        <div class="ms-auto">
+                            <button class="btn btn-link p-1" t-on-click="refreshChats">
+                                <i class="fa fa-refresh fs-5" style="cursor: pointer;"></i>
+                            </button>
+                          <button class="btn btn-link p-1" t-on-click="() => this.showLogoutConfirmation()">
+                                    <i class="fa fa-ellipsis-v"></i>
+                                </button>
+                        </div>
+                            <t t-if="state.showLogoutModal">
+                            <div class="modal-backdrop fade show" style="z-index: 1050;"></div>
+                            <div class="modal fade show d-block" style="z-index: 1055;" t-on-click.self="() => this.state.showLogoutModal = false">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirm Logout</h5>
+                                        <button type="button" class="btn-close" t-on-click="() => this.state.showLogoutModal = false"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to logout from WhatsApp?</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showLogoutModal = false">
+                                            Cancel
+                                        </button>
+                                        <button type="button" class="btn btn-danger" t-on-click="logout">
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    </div>
+                    <div class="search-container mt-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="fa fa-search text-muted"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                class="form-control bg-light border-0" 
+                                placeholder="Search or start a new chat"
+                                t-on-input="handleSearchInput"
+                                t-att-value="state.searchQuery"
+                            />
+                        </div>
+                    </div>
+                
+                    <t t-if="state.loading">
+                        <div class="d-flex justify-content-center p-5">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <t t-if="!state.loading and state.filteredChats.length === 0">
+                        <div class="p-3 text-center text-muted">
+                            No chats available
+                        </div>
+                    </t>
+                    <t t-if="state.showProfilePicViewer">
+                    <div class="modal-backdrop fade show" style="z-index: 1100;"></div>
+                    <div class="modal fade show d-block" style="z-index: 1105;" t-on-click.self="closeProfilePicViewer">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <t t-esc="state.viewedProfilePic.name || 'Profile Picture'"/>
+                                    </h5>
+                                    <button type="button" class="btn-close" t-on-click="closeProfilePicViewer"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img t-att-src="state.viewedProfilePic.url" class="img-fluid rounded-circle" style="max-height: 70vh;"/>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" t-on-click="closeProfilePicViewer">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+
+                    <t t-if="!state.loading">
+                       <div class="chat-list" style="height: calc(100vh - 125px); background-color: #ffffff; overflow-y: auto; overflow-x: hidden;">
+                            <t t-foreach="state.filteredChats" t-as="chat" t-key="chat.id">
+                                <div 
+                                    class="chat-item p-2 d-flex align-items-center"
+                                    t-att-class="{'active-chat bg-light': chat.isActive}"
+                                    t-on-click="() => this.selectChat(chat)"
+                                >
+                                        <div class="avatar me-3" t-on-click="() => this.viewProfilePicture(chat.profilePicUrl, chat.name)">
+                                            <t t-if="chat.profilePicUrl">
+                                                <img t-att-src="chat.profilePicUrl" alt="Profile" class="rounded-circle" width="50" height="50" style="cursor: pointer;"/>
+                                            </t>
+                                            <t t-else="">
+                                                <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px; background-color: #128C7E; cursor: pointer;">
+                                                    <t t-esc="chat.name.charAt(0).toUpperCase()"/>
+                                                </div>
+                                            </t>
+                                        </div>
+
+                                    <div class="flex-grow-1 border-bottom pb-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong class="chat-name"><t t-esc="chat.name"/></strong>
+                                            <small class="text-muted chat-time"><t t-esc="chat.time || '18:30'"/></small>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="text-muted text-truncate chat-preview">
+                                                <t t-if="chat.sender">
+                                                    <span class="me-1"><t t-esc="chat.sender"/>:</span>
+                                                </t>
+                                                <t t-if="chat.last_message_type == 'image'">
+                                                    <i class="fa fa-image me-1"></i> Photo
+                                                </t>
+                                                <t t-elif="chat.last_message_type == 'video'">
+                                                    <i class="fa fa-camera me-1"></i> video
+                                                </t>
+                                                <t t-elif="chat.last_message_type == 'ptt' or chat.last_message_type == 'audio'">
+                                                    <i class="fa fa-microphone me-1"></i> Audio
+                                                </t>
+                                                <t t-elif="chat.last_message_type == 'document'">
+                                                    <i class="fa fa-file me-1"></i> Document
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="chat.last_message"/>
+                                                </t>
+                                            </div>
+                                            <t t-if="chat.unread">
+                                                <span class="badge rounded-pill bg-success ms-2">
+                                                    <t t-esc="chat.unread"/>
+                                                </span>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                </div>
+                
+                <!-- Chat content area -->
+                <div class="o_chat_content flex-grow-1 d-flex flex-column">
+                    <t t-if="!state.activeChat">
+                        <div class="empty-chat h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background-color: #f0f2f5;">
+                            <!-- Main Logo Container -->
+                            <div class="logo-container mb-4 d-flex flex-column align-items-center">
+                                <!-- Odoo Logo -->
+                                <div class="odoo-logo mb-2" style="font-size: 96px; font-weight: bold; color: #714B67;">
+                                    odoo
+                                </div>
+                                
+                                <!-- WhatsApp Logo with icon -->
+                                <div class="whatsapp-title d-flex align-items-center mb-3">
+                                    <i class="fa fa-whatsapp text-success me-2" style="font-size: 32px;"></i>
+                                    <span style="font-size: 28px; font-weight: bold; color: #25D366;">WhatsApp</span>
+                                </div>
+                                
+                                <!-- Connector Text -->
+                                <div class="connector-text" style="
+                                    font-size: 18px;
+                                    letter-spacing: 2px;
+                                    color: #555;
+                                    text-transform: uppercase;
+                                    border-top: 3px solid #25D366;
+                                    border-bottom: 3px solid #25D366;
+                                    padding: 5px 0;
+                                    margin-top: 5px;
+                                ">
+                                    CONNECTOR
+                                </div>
+                            </div>
+
+                            <!-- Description text -->
+                            <h4 class="mb-2" style="color: #333;">WhatsApp Integration</h4>
+                            <p class="text-muted mb-1">Send and receive WhatsApp messages directly from Odoo.</p>
+                            <p class="text-muted">Manage all your customer communications in one place.</p>
+                            <div class="mt-4 text-muted">
+                                <small>End-to-end encrypted messaging</small>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <t t-if="state.activeChat">
+                        <!-- Chat header -->
+                        <div class="chat-header p-2 border-bottom d-flex align-items-center bg-white">
+                            <div class="avatar me-3" t-on-click="() => this.viewProfilePicture(state.activeChat.profilePicUrl, state.activeChat.name)">
+                                <t t-if="state.activeChat.profilePicUrl">
+                                    <img t-att-src="state.activeChat.profilePicUrl" alt="Profile" class="rounded-circle" width="40" height="40" style="cursor: pointer;"/>
+                                </t>
+                                <t t-else="">
+                                    <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; background-color: #128C7E; cursor: pointer;">
+                                        <t t-esc="state.activeChat.name.charAt(0).toUpperCase()"/>
+                                    </div>
+                                </t>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="m-0"><t t-esc="state.activeChat.name"/></h6>
+                                <small class="text-muted">online</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-link p-1" t-on-click="() => this.showLogoutConfirmation()">
+                                    <i class="fa fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                            <t t-if="state.showLogoutModal">
+                                <div class="modal-backdrop fade show" style="z-index: 1050;"></div>
+                                <div class="modal fade show d-block" style="z-index: 1055;" t-on-click.self="() => this.state.showLogoutModal = false">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Logout</h5>
+                                                <button type="button" class="btn-close" t-on-click="() => this.state.showLogoutModal = false"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to logout from WhatsApp?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showLogoutModal = false">
+                                                    Cancel
+                                                </button>
+                                                <button type="button" class="btn btn-danger" t-on-click="logout">
+                                                    Logout
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                        
+                        <!-- Messages area -->
+                        <div class="messages-container flex-grow-1 p-3 overflow-auto" 
+                            t-ref="messageList"
+                            style="background-color: #ffffff;">
+                            <t t-if="state.activeChat.id and state.messages[state.activeChat.id]">
+                               <t t-foreach="state.messages[state.activeChat.id]" t-as="message" t-key="message.id">
+                                <div class="message-wrapper d-flex mb-2"
+                                    t-att-class="message.sender === 'me' ? 'justify-content-end' : 'justify-content-start'">
+                                    <div class="message-bubble p-2 rounded shadow-sm"
+                                        t-att-class="message.sender === 'me' ? 'bg-light-green' : 'bg-white'"
+                                        style="max-width: 75%; border-radius: 7.5px; position: relative;">
+                                        <t t-if="message.sender === 'them'">
+                                            <div 
+                                                class="message-sender mb-1" 
+                                                t-att-style="'font-size: 0.8em; color: ' + (message.senderColor || 'inherit')"
+                                            >
+                                                <t t-esc="message.senderName"/>
+                                            </div>
+                                        </t>
+                                        <div class="message-text"><t t-esc="message.text"/></div>
+                                        
+                                        <!-- Attachment handling -->
+                                       <t t-if="message.hasAttachment">
+                                        <div class="message-attachment mt-1">
+                                            <t t-if="message.attachmentType == 'image'">
+                                                <img t-att-src="message.attachmentUrl" 
+                                                    class="img-fluid rounded mt-2" 
+                                                    alt="Image Attachment" 
+                                                    style="max-width: 200px; cursor: pointer;"
+                                                    t-on-click="() => this.viewMedia({
+                                                        url: message.attachmentUrl,
+                                                        type: 'image',
+                                                        name: message.attachmentName || 'Image',
+                                                        mimeType: 'image/jpeg'
+                                                    })"/>
+                                            </t>
+
+                                            <t t-elif="message.attachmentType == 'video'">
+                                                <div style="position: relative; cursor: pointer;"
+                                                    t-on-click="() => this.viewMedia({
+                                                        url: message.attachmentUrl,
+                                                        type: 'video',
+                                                        name: message.attachmentName || 'Video',
+                                                        mimeType: 'video/mp4'
+                                                    })">
+                                                    <video class="w-100 mt-2" style="max-width: 300px;">
+                                                        <source t-att-src="message.attachmentUrl" type="video/mp4"/>
+                                                        Your browser does not support the video tag.
+                                                    </video>
+                                                    <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background-color: rgba(0,0,0,0.5); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fa fa-play"></i>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                            
+                                            <t t-elif="message.attachmentType == 'audio' or message.attachmentType == 'ptt'">
+                                                <audio controls="true" class="mt-2">
+                                                    <source t-att-src="message.attachmentUrl" type="audio/ogg"/>
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                            </t>
+
+                                            <t t-elif="message.attachmentType == 'document'">
+                                                <div class="document-attachment p-2 bg-light rounded mt-2 d-flex align-items-center">
+                                                    <i class="fa fa-file me-2 text-primary"></i>
+                                                    <div class="flex-grow-1 text-truncate">
+                                                        <t t-esc="message.attachmentName"/>
+                                                    </div>
+                                                    <a t-att-href="message.attachmentUrl" 
+                                                    download="document" 
+                                                    class="ms-2 text-decoration-none">
+                                                        <i class="fa fa-download"></i>
+                                                    </a>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                        
+                                        <div class="message-time small text-muted text-end">
+                                            <small><t t-esc="message.time"/></small>
+                                            <t t-if="message.sending">
+                                                <i class="fa fa-clock-o ms-1"/>
+                                            </t>
+                                            <t t-elif="message.delivered">
+                                                <i class="fa fa-check ms-1"/>
+                                            </t>
+                                            <t t-elif="message.read">
+                                                <i class="fa fa-check-double text-primary ms-1"/>
+                                            </t>
+                                            <t t-elif="message.failed">
+                                                <i class="fa fa-exclamation-circle text-danger ms-1"/>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                               </t>
+                            </t>
+                        </div>
+                        
+                        <!-- Message input -->
+                        <div class="message-input p-2 border-top" style="background-color: #f0f2f5;">
+                            <!-- Recording interface -->
+                            <t t-if="state.isRecording">
+                                <div class="recording-interface d-flex align-items-center justify-content-between bg-white p-2 rounded">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa fa-microphone text-danger me-2"></i>
+                                        <span class="recording-time">Recording... <t t-esc="formatTime(state.recordingTime)"/></span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-danger me-2" t-on-click="cancelAudioRecording">
+                                            <i class="fa fa-trash"></i> Cancel
+                                        </button>
+                                        <button class="btn btn-sm btn-success" t-on-click="sendAudioMessage">
+                                            <i class="fa fa-paper-plane"></i> Send
+                                        </button>
+                                    </div>
+                                </div>
+                            </t>
+                            
+                            <!-- File attachment preview -->
+                            <t t-if="state.attachment">
+                                <div class="attachment-preview mb-2 p-2 bg-white rounded d-flex align-items-center">
+                                    <t t-if="state.attachment.mediaType === 'audio'">
+                                        <i class="fa fa-microphone me-2"></i>
+                                    </t>
+                                    <t t-else="">
+                                        <i class="fa fa-file me-2"></i>
+                                    </t>
+                                    <div class="flex-grow-1 text-truncate">
+                                        <t t-esc="state.attachment.name"/>
+                                    </div>
+                                    <button class="btn btn-sm btn-link text-danger" t-on-click="removeAttachment">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </div>
+                            </t>
+                            
+                            <!-- Normal input area (only show when not recording) -->
+                            <t t-if="!state.isRecording">
+                                <div class="input-group">
+                                    <!-- Emoji button -->
+                                    <button class="btn btn-link text-muted position-relative" t-on-click="toggleEmojiPicker">
+                                        <i class="fa fa-smile-o fs-5"></i>
+                                    </button>
+                                    
+                                    <!-- Emoji picker panel -->
+                                    <t t-if="state.emojiPickerOpen">
+                                        <div class="emoji-picker-container position-absolute bottom-100 start-0 mb-2 bg-white rounded shadow-lg p-2 border" style="width: 320px; height: 300px; z-index: 1000;">
+                                            <!-- Emoji category tabs -->
+                                            <div class="emoji-category-tabs d-flex overflow-auto pb-2 mb-2 border-bottom" style="white-space: nowrap;">
+                                                <t t-foreach="state.emojiCategories" t-as="category" t-key="category_index">
+                                                    <button 
+                                                        t-on-click="() => this.changeEmojiCategory(category_index)"
+                                                        class="btn btn-sm me-1 flex-shrink-0" 
+                                                        t-attf-class="{{ state.currentEmojiCategory === category_index ? 'btn-primary' : 'btn-light' }}">
+                                                        <t t-esc="category.name.split(' ')[0]"/>
+                                                    </button>
+                                                </t>
+                                            </div>
+                                            
+                                            <!-- Emoji grid -->
+                                            <div class="emoji-grid overflow-auto" style="height: 230px;">
+                                                <div class="d-flex flex-wrap">
+                                                    <t t-foreach="state.emojiCategories[state.currentEmojiCategory].emojis" t-as="emoji" t-key="emoji_index">
+                                                        <button
+                                                            t-on-click="() => this.insertEmoji(emoji)"
+                                                            class="btn btn-sm btn-light emoji-btn p-1 m-1"
+                                                            style="min-width: 36px; min-height: 36px; font-size: 20px;">
+                                                            <t t-esc="emoji"/>
+                                                        </button>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    
+                                    <!-- Hidden file input -->
+                                    <input 
+                                        type="file" 
+                                        class="d-none" 
+                                        t-ref="fileInput"
+                                        t-on-change="handleFileChange"
+                                    />
+                                    
+                                    <!-- Attachment button -->
+                                    <button 
+                                        class="btn btn-link text-muted" 
+                                        type="button"
+                                        t-on-click="openFileManager"
+                                    >
+                                        <i class="fa fa-paperclip fs-5"></i>
+                                    </button>
+                                    
+                                    <textarea 
+                                        t-ref="messageInput"
+                                        class="form-control bg-light border-0"
+                                        placeholder="Type a message" 
+                                        rows="1"
+                                        t-model="state.newMessage"
+                                        t-on-keydown="handleKeyDown"
+                                        style="resize: none;"
+                                    ></textarea>
+                                    
+                                    <!-- Send button -->
+                                    <t t-if="state.newMessage.trim() or state.attachment">
+                                        <button 
+                                            class="btn btn-link text-primary" 
+                                            t-on-click="sendMessage"
+                                        >
+                                            <i class="fa fa-paper-plane fs-5"></i>
+                                        </button>
+                                    </t>
+                                    
+                                    <!-- Microphone button for audio recording -->
+                                    <t t-if="!state.newMessage.trim() and !state.attachment">
+                                        <button 
+                                            class="btn btn-link text-muted" 
+                                            t-on-click="startAudioRecording"
+                                        >
+                                            <i class="fa fa-microphone fs-5"></i>
+                                        </button>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>
